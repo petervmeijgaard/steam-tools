@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { composeGrid, offsetAfterDrag } from "../compose-grid.ts";
+import { canReposition, composeGrid, offsetAfterDrag } from "../compose-grid.ts";
 import { GRID_HEIGHT, GRID_WIDTH } from "../grid-size.ts";
 import { nodeCanvas } from "../node-canvas.ts";
 
@@ -204,6 +204,11 @@ describe("composeGrid", () => {
     const clamped = offsetAfterDrag(artwork, { x: 0, y: 0 }, { x: -100_000, y: 0 });
     expect(clamped.x).toBe(35);
     expect(clamped.y).toBe(0);
+  });
+
+  it("can reposition any artwork that cover actually crops", () => {
+    expect(canReposition(solidImage(601, 900, [0, 0, 0, OPAQUE]))).toBe(true);
+    expect(canReposition(solidImage(600, 900, [0, 0, 0, OPAQUE]))).toBe(false);
   });
 
   it("ignores a drag when the artwork is already 2:3", () => {

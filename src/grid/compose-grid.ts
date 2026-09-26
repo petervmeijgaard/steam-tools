@@ -58,7 +58,7 @@ function offsetLimit(artwork: GridImage): Offset {
  */
 export function canReposition(artwork: GridImage): boolean {
   const limit = offsetLimit(artwork);
-  return limit.x > 0.5 || limit.y > 0.5;
+  return limit.x > 0 || limit.y > 0;
 }
 
 /**
