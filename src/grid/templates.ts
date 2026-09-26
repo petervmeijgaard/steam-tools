@@ -1,93 +1,41 @@
-import { type GridImage, type Slot } from "./compose-grid.ts";
-import { GRID_HEIGHT, GRID_WIDTH } from "./grid-size.ts";
+import { type Slot } from "./compose-grid.ts";
+import gameBoy from "./templates/game-boy.png";
+import gameBoyAdvance from "./templates/game-boy-advance.png";
+import nintendoDs from "./templates/nintendo-ds.png";
+import nintendoGamecube from "./templates/nintendo-gamecube.png";
+import playstation from "./templates/playstation.png";
+import playstation2 from "./templates/playstation-2.png";
+import psp from "./templates/psp.png";
+import steam from "./templates/steam.png";
+import wii from "./templates/wii.png";
+import xbox from "./templates/xbox.png";
 
 export type Template = {
   name: string;
-  image: GridImage;
+  src: string;
   slot: Slot;
 };
 
-const INK: [number, number, number, number] = [20, 20, 20, 255];
-
-function solid(rgba: [number, number, number, number]): GridImage {
-  const data = new Uint8ClampedArray(GRID_WIDTH * GRID_HEIGHT * 4);
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = rgba[0];
-    data[i + 1] = rgba[1];
-    data[i + 2] = rgba[2];
-    data[i + 3] = rgba[3];
-  }
-  return { width: GRID_WIDTH, height: GRID_HEIGHT, data };
-}
-
-/** Paints a rectangle of the grid. Coordinates are in grid pixels. */
-function fillRect(
-  image: GridImage,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  rgba: [number, number, number, number],
-) {
-  for (let row = y; row < y + height; row++) {
-    for (let col = x; col < x + width; col++) {
-      const i = (row * image.width + col) * 4;
-      image.data[i] = rgba[0];
-      image.data[i + 1] = rgba[1];
-      image.data[i + 2] = rgba[2];
-      image.data[i + 3] = rgba[3];
-    }
-  }
-}
-
-/** A template that is a solid border, transparent inside. */
-function border(thickness: number): GridImage {
-  const image = solid([0, 0, 0, 0]);
-  fillRect(image, 0, 0, GRID_WIDTH, thickness, INK);
-  fillRect(image, 0, GRID_HEIGHT - thickness, GRID_WIDTH, thickness, INK);
-  fillRect(image, 0, 0, thickness, GRID_HEIGHT, INK);
-  fillRect(image, GRID_WIDTH - thickness, 0, thickness, GRID_HEIGHT, INK);
-  return image;
-}
-
-/** A template that is an L-shaped mark in each corner, transparent elsewhere. */
-function corners(arm: number, thickness: number): GridImage {
-  const image = solid([0, 0, 0, 0]);
-  const right = GRID_WIDTH - arm;
-  const bottom = GRID_HEIGHT - arm;
-  const farX = GRID_WIDTH - thickness;
-  const farY = GRID_HEIGHT - thickness;
-
-  for (const [x, y] of [
-    [0, 0],
-    [right, 0],
-    [0, bottom],
-    [right, bottom],
-  ] as const) {
-    fillRect(image, x, y === 0 ? 0 : farY, arm, thickness, INK);
-    fillRect(image, x === 0 ? 0 : farX, y, thickness, arm, INK);
-  }
-
-  return image;
-}
-
-const BORDER_THICKNESS = 24;
-
-/** The templates shipped with the tool. Adding one is a code change. */
+/**
+ * The platform templates, in picker order. Each Slot is the bounding rectangle
+ * of that template's clear opening, measured from the shipped PNG in grid pixels
+ * from the top-left. PlayStation 2's Slot is the white strip. Steam is selected
+ * when the tool opens.
+ */
 export const templates: readonly Template[] = [
-  {
-    name: "Border",
-    image: border(BORDER_THICKNESS),
-    slot: {
-      x: BORDER_THICKNESS,
-      y: BORDER_THICKNESS,
-      width: GRID_WIDTH - BORDER_THICKNESS * 2,
-      height: GRID_HEIGHT - BORDER_THICKNESS * 2,
-    },
-  },
-  {
-    name: "Corners",
-    image: corners(120, 16),
-    slot: { x: 0, y: 0, width: GRID_WIDTH, height: GRID_HEIGHT },
-  },
+  { name: "Game Boy", src: gameBoy, slot: { x: 16, y: 112, width: 559, height: 768 } },
+  { name: "Game Boy Advance", src: gameBoyAdvance, slot: { x: 14, y: 162, width: 561, height: 718 } },
+  { name: "Nintendo DS", src: nintendoDs, slot: { x: 14, y: 162, width: 561, height: 718 } },
+  { name: "Nintendo GameCube", src: nintendoGamecube, slot: { x: 14, y: 88, width: 565, height: 792 } },
+  { name: "PlayStation", src: playstation, slot: { x: 14, y: 116, width: 561, height: 764 } },
+  { name: "PlayStation 2", src: playstation2, slot: { x: 16, y: 112, width: 196, height: 770 } },
+  { name: "PSP", src: psp, slot: { x: 13, y: 83, width: 561, height: 797 } },
+  { name: "Steam", src: steam, slot: { x: 14, y: 97, width: 561, height: 783 } },
+  { name: "Wii", src: wii, slot: { x: 13, y: 53, width: 561, height: 827 } },
+  { name: "Xbox", src: xbox, slot: { x: 14, y: 97, width: 561, height: 783 } },
 ];
+
+const steamTemplate = templates.find((template) => template.name === "Steam");
+if (!steamTemplate) throw new Error("Steam template is missing");
+
+export const initialTemplate = steamTemplate;

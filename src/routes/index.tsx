@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from "react";
 
-import { browserCanvas, paintImage } from "../grid/browser-canvas.ts";
+import { browserCanvas, readTemplate } from "../grid/browser-canvas.ts";
 import {
   canReposition,
   composeGrid,
@@ -12,7 +12,7 @@ import {
 } from "../grid/compose-grid.ts";
 import { GRID_HEIGHT, GRID_WIDTH } from "../grid/grid-size.ts";
 import { readArtwork } from "../grid/read-artwork.ts";
-import { templates, type Template } from "../grid/templates.ts";
+import { initialTemplate, templates, type Template } from "../grid/templates.ts";
 
 export const Route = createFileRoute("/")({ component: GridPage });
 
@@ -20,24 +20,42 @@ function GridPage() {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const requestId = useRef(0);
   const pan = useRef<{ x: number; y: number; offset: Offset } | null>(null);
-  const [template, setTemplate] = useState<Template>(templates[0]);
+  const [template, setTemplate] = useState<Template>(initialTemplate);
+  const [templateImages, setTemplateImages] = useState<ReadonlyMap<string, GridImage>>(new Map());
   const [artwork, setArtwork] = useState<GridImage | null>(null);
   const [fit, setFit] = useState<Fit>("cover");
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
+  const templateImage = templateImages.get(template.name);
   const repositionable = artwork !== null && fit === "cover" && canReposition(artwork, template.slot);
 
   useEffect(() => {
+    let cancelled = false;
+    void Promise.all(templates.map(async (item) => [item.name, await readTemplate(item.src)] as const))
+      .then((entries) => {
+        if (!cancelled) setTemplateImages(new Map(entries));
+      })
+      .catch((caught: unknown) => {
+        if (!cancelled) {
+          setError(caught instanceof Error ? caught.message : "That template could not be read.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const preview = previewRef.current;
-    if (!preview || !artwork) return;
+    if (!preview || !artwork || !templateImage) return;
 
     composeGrid(
-      { artwork, template: template.image, slot: template.slot, fit, offset },
+      { artwork, template: templateImage, slot: template.slot, fit, offset },
       browserCanvas(preview),
     );
-  }, [artwork, template, fit, offset]);
+  }, [artwork, template, templateImage, fit, offset]);
 
   async function loadArtwork(file: File) {
     const id = ++requestId.current;
@@ -76,10 +94,10 @@ function GridPage() {
 
   function downloadGrid() {
     const preview = previewRef.current;
-    if (!preview || !artwork) return;
+    if (!preview || !artwork || !templateImage) return;
 
     composeGrid(
-      { artwork, template: template.image, slot: template.slot, fit, offset },
+      { artwork, template: templateImage, slot: template.slot, fit, offset },
       browserCanvas(preview),
     );
     const link = document.createElement("a");
@@ -113,7 +131,7 @@ function GridPage() {
 
         <fieldset>
           <legend className="text-lg font-medium">Template</legend>
-          <div className="mt-3 flex gap-3">
+          <div className="mt-3 flex flex-wrap gap-3">
             {templates.map((item) => (
               <TemplateChoice
                 key={item.name}
@@ -207,7 +225,7 @@ function GridPage() {
         <button
           type="button"
           onClick={downloadGrid}
-          disabled={!artwork}
+          disabled={!artwork || !templateImage}
           className="w-fit rounded-md bg-black px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           Download grid
@@ -233,13 +251,11 @@ function TemplateChoice({
       onClick={onSelect}
       className={`flex flex-col items-center gap-2 rounded-md p-2 ${selected ? "ring-2 ring-black" : "ring-1 ring-neutral-200"}`}
     >
-      <canvas
-        ref={(canvas) => {
-          if (canvas) paintImage(canvas, template.image);
-        }}
+      <img
+        src={template.src}
+        alt=""
         width={GRID_WIDTH}
         height={GRID_HEIGHT}
-        aria-hidden="true"
         className="aspect-[2/3] h-auto w-16 bg-neutral-100"
       />
       <span className="text-sm">{template.name}</span>
