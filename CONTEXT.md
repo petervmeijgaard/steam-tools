@@ -13,9 +13,13 @@ The image a user supplies to be composited into a grid. It may be a game's exist
 _Avoid_: cover art, capsule, source image, upload
 
 **Template**:
-A 600×900 image with transparent regions, shipped with the tool, through which the artwork shows. It is decorative only: a border, gradient, texture, or vignette — never text, a logo, or a badge, so the resulting grid stays within Steamworks' asset rules.
+A 600×900 decorative image shipped with the tool. It has one Slot, and the artwork shows through its transparent regions. It never carries text, a logo, or a badge.
 _Avoid_: frame, layout, skin, overlay
 
+**Slot**:
+The axis-aligned rectangle, in grid pixels measured from the top-left, inside the grid, where a template places artwork. Artwork is fitted into the Slot, not into the whole grid. A template has one.
+_Avoid_: portal, place, hole, window, viewport, frame
+
 **Fit**:
-How artwork is scaled into the grid's 2:3 frame when its own aspect ratio differs. Either it fills the frame and the overflow is cropped, or it fits entirely inside the frame and the gaps are left empty.
+How artwork is scaled into a Slot when its own aspect ratio differs. Either it fills the Slot and the overflow is cropped, or it fits entirely inside the Slot and the uncovered pixels stay transparent.
 _Avoid_: resize, scale mode, crop mode
