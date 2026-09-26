@@ -67,6 +67,17 @@ function GridPage() {
     );
   }
 
+  function downloadGrid() {
+    const preview = previewRef.current;
+    if (!preview || !artwork) return;
+
+    composeGrid({ artwork, template: template.image, fit, offset }, browserCanvas(preview));
+    const link = document.createElement("a");
+    link.href = preview.toDataURL("image/png");
+    link.download = "grid.png";
+    link.click();
+  }
+
   function takeDrop(event: DragEvent) {
     event.preventDefault();
     setDragging(false);
@@ -178,6 +189,15 @@ function GridPage() {
         ) : (
           <p className="text-neutral-600">Add artwork to preview the grid.</p>
         )}
+
+        <button
+          type="button"
+          onClick={downloadGrid}
+          disabled={!artwork}
+          className="w-fit rounded-md bg-black px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Download grid
+        </button>
       </main>
     </div>
   );
