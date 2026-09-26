@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { composeGrid } from "../compose-grid.ts";
+import { composeGrid, offsetAfterDrag } from "../compose-grid.ts";
 import { GRID_HEIGHT, GRID_WIDTH } from "../grid-size.ts";
 import { nodeCanvas } from "../node-canvas.ts";
 
@@ -192,5 +192,23 @@ describe("composeGrid", () => {
     );
 
     expect(pixel(grid, 300, 450)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("moves the offset opposite the drag, and clamps it to the artwork", () => {
+    const artwork = solidImage(WIDE_WIDTH, WIDE_HEIGHT, [0, 0, 0, OPAQUE]);
+
+    // 30 canvas pixels is one source pixel on this artwork. Dragging right
+    // reveals the left side, so x decreases.
+    expect(offsetAfterDrag(artwork, { x: 0, y: 0 }, { x: 30, y: 0 })).toEqual({ x: -1, y: 0 });
+
+    const clamped = offsetAfterDrag(artwork, { x: 0, y: 0 }, { x: -100_000, y: 0 });
+    expect(clamped.x).toBe(35);
+    expect(clamped.y).toBe(0);
+  });
+
+  it("ignores a drag when the artwork is already 2:3", () => {
+    const artwork = solidImage(20, 30, [0, 0, 0, OPAQUE]);
+
+    expect(offsetAfterDrag(artwork, { x: 0, y: 0 }, { x: 100, y: 80 })).toEqual({ x: 0, y: 0 });
   });
 });

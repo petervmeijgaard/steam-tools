@@ -1,8 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from "react";
 
 import { browserCanvas, paintImage } from "../grid/browser-canvas.ts";
-import { composeGrid, type GridImage } from "../grid/compose-grid.ts";
+import {
+  canReposition,
+  composeGrid,
+  offsetAfterDrag,
+  type Fit,
+  type GridImage,
+  type Offset,
+} from "../grid/compose-grid.ts";
 import { GRID_HEIGHT, GRID_WIDTH } from "../grid/grid-size.ts";
 import { readArtwork } from "../grid/read-artwork.ts";
 import { templates, type Template } from "../grid/templates.ts";
@@ -12,20 +19,22 @@ export const Route = createFileRoute("/")({ component: GridPage });
 function GridPage() {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const requestId = useRef(0);
+  const pan = useRef<{ x: number; y: number; offset: Offset } | null>(null);
   const [template, setTemplate] = useState<Template>(templates[0]);
   const [artwork, setArtwork] = useState<GridImage | null>(null);
+  const [fit, setFit] = useState<Fit>("cover");
+  const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+
+  const repositionable = artwork !== null && fit === "cover" && canReposition(artwork);
 
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview || !artwork) return;
 
-    composeGrid(
-      { artwork, template: template.image, fit: "cover", offset: { x: 0, y: 0 } },
-      browserCanvas(preview),
-    );
-  }, [artwork, template]);
+    composeGrid({ artwork, template: template.image, fit, offset }, browserCanvas(preview));
+  }, [artwork, template, fit, offset]);
 
   async function loadArtwork(file: File) {
     const id = ++requestId.current;
@@ -33,11 +42,29 @@ function GridPage() {
       const next = await readArtwork(file);
       if (id !== requestId.current) return;
       setArtwork(next);
+      setOffset({ x: 0, y: 0 });
       setError(null);
     } catch (caught) {
       if (id !== requestId.current) return;
       setError(caught instanceof Error ? caught.message : "That file isn't an image.");
     }
+  }
+
+  function beginPan(event: PointerEvent<HTMLCanvasElement>) {
+    if (!repositionable || !artwork) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    pan.current = { x: event.clientX, y: event.clientY, offset };
+  }
+
+  function movePan(event: PointerEvent<HTMLCanvasElement>) {
+    if (!pan.current || !artwork) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setOffset(
+      offsetAfterDrag(artwork, pan.current.offset, {
+        x: (event.clientX - pan.current.x) * (GRID_WIDTH / rect.width),
+        y: (event.clientY - pan.current.y) * (GRID_HEIGHT / rect.height),
+      }),
+    );
   }
 
   function takeDrop(event: DragEvent) {
@@ -102,13 +129,52 @@ function GridPage() {
         </div>
 
         {artwork ? (
-          <canvas
-            ref={previewRef}
-            width={GRID_WIDTH}
-            height={GRID_HEIGHT}
-            aria-label="Preview of the grid"
-            className="aspect-[2/3] h-auto w-72"
-          />
+          <div className="flex flex-col gap-3">
+            <fieldset>
+              <legend className="text-lg font-medium">Fit</legend>
+              <div className="mt-2 flex gap-4 text-sm">
+                <label>
+                  <input
+                    type="radio"
+                    name="fit"
+                    value="cover"
+                    checked={fit === "cover"}
+                    onChange={() => setFit("cover")}
+                    className="mr-2"
+                  />
+                  Fill the frame
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="fit"
+                    value="contain"
+                    checked={fit === "contain"}
+                    onChange={() => setFit("contain")}
+                    className="mr-2"
+                  />
+                  Show the whole image
+                </label>
+              </div>
+            </fieldset>
+            <canvas
+              ref={previewRef}
+              width={GRID_WIDTH}
+              height={GRID_HEIGHT}
+              aria-label={
+                repositionable ? "Preview of the grid. Drag to reposition the crop." : "Preview of the grid"
+              }
+              onPointerDown={repositionable ? beginPan : undefined}
+              onPointerMove={repositionable ? movePan : undefined}
+              onPointerUp={() => {
+                pan.current = null;
+              }}
+              className={`aspect-[2/3] h-auto w-72 ${repositionable ? "cursor-grab active:cursor-grabbing" : ""}`}
+            />
+            {repositionable && (
+              <p className="text-sm text-neutral-600">Drag the preview to choose which part stays.</p>
+            )}
+          </div>
         ) : (
           <p className="text-neutral-600">Add artwork to preview the grid.</p>
         )}
