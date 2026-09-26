@@ -88,8 +88,8 @@ export function offsetAfterDrag(
   const crop = coverCrop(artwork, slot);
   const limit = offsetLimit(artwork, slot);
   return {
-    x: limit.x === 0 ? 0 : clamp(start.x - drag.x / (slot.width / crop.width), -limit.x, limit.x),
-    y: limit.y === 0 ? 0 : clamp(start.y - drag.y / (slot.height / crop.height), -limit.y, limit.y),
+    x: limit.x === 0 ? start.x : clamp(start.x - drag.x / (slot.width / crop.width), -limit.x, limit.x),
+    y: limit.y === 0 ? start.y : clamp(start.y - drag.y / (slot.height / crop.height), -limit.y, limit.y),
   };
 }
 
