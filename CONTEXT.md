@@ -13,7 +13,7 @@ The image a user supplies to be composited into a grid. It may be a game's exist
 _Avoid_: cover art, capsule, source image, upload
 
 **Template**:
-A 600×900 decorative image shipped with the tool. It has one Slot, and the artwork shows through its transparent regions. It never carries text, a logo, or a badge.
+A 600×900 decorative image shipped with the tool. It has one Slot, and the artwork shows through its transparent regions. It may carry text, a logo, or a badge.
 _Avoid_: frame, layout, skin, overlay
 
 **Slot**:
