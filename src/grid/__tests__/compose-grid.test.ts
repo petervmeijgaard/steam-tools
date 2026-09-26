@@ -167,4 +167,30 @@ describe("composeGrid", () => {
     expect(pixel(grid, 0, 0)).toEqual([0, 255, 0, OPAQUE]);
     expect(pixel(grid, 1, 0)).toEqual([255, 0, 0, OPAQUE]);
   });
+
+  it("replaces the previous grid instead of painting over it", () => {
+    const template = solidImage(GRID_WIDTH, GRID_HEIGHT, [0, 0, 0, 0]);
+
+    composeGrid(
+      {
+        artwork: solidImage(WIDE_WIDTH, WIDE_HEIGHT, [255, 0, 0, OPAQUE]),
+        template,
+        fit: "cover",
+        offset: { x: 0, y: 0 },
+      },
+      canvas,
+    );
+
+    const grid = composeGrid(
+      {
+        artwork: solidImage(WIDE_WIDTH, WIDE_HEIGHT, [0, 0, 0, 0]),
+        template,
+        fit: "cover",
+        offset: { x: 0, y: 0 },
+      },
+      canvas,
+    );
+
+    expect(pixel(grid, 300, 450)).toEqual([0, 0, 0, 0]);
+  });
 });

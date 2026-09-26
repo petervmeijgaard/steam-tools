@@ -76,14 +76,16 @@ function destination(artwork: GridImage, fit: Fit) {
 /**
  * Composites artwork under a template into a 600 by 900 grid.
  *
- * The artwork is drawn first, cropped or letterboxed according to the fit, and
- * the template is drawn over it so the artwork shows through the template's
- * transparent regions.
+ * Clears the canvas first, so a previous grid cannot show through. The artwork
+ * is drawn cropped or letterboxed according to the fit, and the template is
+ * drawn over it so the artwork shows through the template's transparent regions.
  */
 export function composeGrid(input: GridInput, canvas: Canvas): GridImage {
   const source = sourceRect(input.artwork, input.fit, input.offset);
   const dest = destination(input.artwork, input.fit);
   const { context } = canvas;
+
+  context.clearRect(0, 0, GRID_WIDTH, GRID_HEIGHT);
 
   context.drawImage(
     canvas.load(input.artwork),
