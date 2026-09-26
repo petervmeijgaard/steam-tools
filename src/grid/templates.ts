@@ -1,9 +1,10 @@
-import { type GridImage } from "./compose-grid.ts";
+import { type GridImage, type Slot } from "./compose-grid.ts";
 import { GRID_HEIGHT, GRID_WIDTH } from "./grid-size.ts";
 
 export type Template = {
   name: string;
   image: GridImage;
+  slot: Slot;
 };
 
 const INK: [number, number, number, number] = [20, 20, 20, 255];
@@ -70,8 +71,23 @@ function corners(arm: number, thickness: number): GridImage {
   return image;
 }
 
+const BORDER_THICKNESS = 24;
+
 /** The templates shipped with the tool. Adding one is a code change. */
 export const templates: readonly Template[] = [
-  { name: "Border", image: border(24) },
-  { name: "Corners", image: corners(120, 16) },
+  {
+    name: "Border",
+    image: border(BORDER_THICKNESS),
+    slot: {
+      x: BORDER_THICKNESS,
+      y: BORDER_THICKNESS,
+      width: GRID_WIDTH - BORDER_THICKNESS * 2,
+      height: GRID_HEIGHT - BORDER_THICKNESS * 2,
+    },
+  },
+  {
+    name: "Corners",
+    image: corners(120, 16),
+    slot: { x: 0, y: 0, width: GRID_WIDTH, height: GRID_HEIGHT },
+  },
 ];

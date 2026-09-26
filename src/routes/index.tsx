@@ -27,13 +27,16 @@ function GridPage() {
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
-  const repositionable = artwork !== null && fit === "cover" && canReposition(artwork);
+  const repositionable = artwork !== null && fit === "cover" && canReposition(artwork, template.slot);
 
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview || !artwork) return;
 
-    composeGrid({ artwork, template: template.image, fit, offset }, browserCanvas(preview));
+    composeGrid(
+      { artwork, template: template.image, slot: template.slot, fit, offset },
+      browserCanvas(preview),
+    );
   }, [artwork, template, fit, offset]);
 
   async function loadArtwork(file: File) {
@@ -64,7 +67,7 @@ function GridPage() {
     if (!pan.current || !artwork || event.buttons === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
     setOffset(
-      offsetAfterDrag(artwork, pan.current.offset, {
+      offsetAfterDrag(artwork, template.slot, pan.current.offset, {
         x: (event.clientX - pan.current.x) * (GRID_WIDTH / rect.width),
         y: (event.clientY - pan.current.y) * (GRID_HEIGHT / rect.height),
       }),
@@ -75,7 +78,10 @@ function GridPage() {
     const preview = previewRef.current;
     if (!preview || !artwork) return;
 
-    composeGrid({ artwork, template: template.image, fit, offset }, browserCanvas(preview));
+    composeGrid(
+      { artwork, template: template.image, slot: template.slot, fit, offset },
+      browserCanvas(preview),
+    );
     const link = document.createElement("a");
     link.href = preview.toDataURL("image/png");
     link.download = "grid.png";
@@ -113,7 +119,11 @@ function GridPage() {
                 key={item.name}
                 template={item}
                 selected={item === template}
-                onSelect={() => setTemplate(item)}
+                onSelect={() => {
+                  if (item === template) return;
+                  setTemplate(item);
+                  setOffset({ x: 0, y: 0 });
+                }}
               />
             ))}
           </div>
@@ -157,7 +167,7 @@ function GridPage() {
                     onChange={() => setFit("cover")}
                     className="mr-2"
                   />
-                  Fill the frame
+                  Fill the Slot
                 </label>
                 <label>
                   <input
@@ -168,7 +178,7 @@ function GridPage() {
                     onChange={() => setFit("contain")}
                     className="mr-2"
                   />
-                  Show the whole image
+                  Fit inside the Slot
                 </label>
               </div>
             </fieldset>
