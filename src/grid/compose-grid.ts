@@ -36,20 +36,59 @@ export type Canvas = {
  * the longer one down to the frame's aspect, with the offset choosing which
  * part survives.
  */
+function coverCrop(artwork: GridImage) {
+  const wider = artwork.width / artwork.height > GRID_ASPECT;
+  return wider
+    ? { width: artwork.height * GRID_ASPECT, height: artwork.height }
+    : { width: artwork.width, height: artwork.width / GRID_ASPECT };
+}
+
+/** How far the offset can move, in source pixels, before the frame shows a gap. */
+function offsetLimit(artwork: GridImage): Offset {
+  const crop = coverCrop(artwork);
+  return {
+    x: Math.max(0, (artwork.width - crop.width) / 2),
+    y: Math.max(0, (artwork.height - crop.height) / 2),
+  };
+}
+
+/**
+ * Whether cover actually crops this artwork. An artwork that is already 2:3
+ * has nothing to reposition.
+ */
+export function canReposition(artwork: GridImage): boolean {
+  const limit = offsetLimit(artwork);
+  return limit.x > 0.5 || limit.y > 0.5;
+}
+
+/**
+ * The offset after a drag on the cover preview.
+ *
+ * `drag` is in canvas pixels, positive right and down. Dragging right reveals
+ * the artwork's left side, so the offset decreases. The result is clamped so
+ * the frame stays covered, and a drag on artwork that is already 2:3 changes
+ * nothing.
+ */
+export function offsetAfterDrag(artwork: GridImage, start: Offset, drag: { x: number; y: number }): Offset {
+  const crop = coverCrop(artwork);
+  const limit = offsetLimit(artwork);
+  return {
+    x: limit.x === 0 ? 0 : clamp(start.x - drag.x / (GRID_WIDTH / crop.width), -limit.x, limit.x),
+    y: limit.y === 0 ? 0 : clamp(start.y - drag.y / (GRID_HEIGHT / crop.height), -limit.y, limit.y),
+  };
+}
+
 function sourceRect(artwork: GridImage, fit: Fit, offset: Offset) {
   if (fit === "contain") {
     return { x: 0, y: 0, width: artwork.width, height: artwork.height };
   }
 
-  const wider = artwork.width / artwork.height > GRID_ASPECT;
-  const width = wider ? artwork.height * GRID_ASPECT : artwork.width;
-  const height = wider ? artwork.height : artwork.width / GRID_ASPECT;
-
+  const crop = coverCrop(artwork);
   return {
-    x: clamp((artwork.width - width) / 2 + offset.x, 0, artwork.width - width),
-    y: clamp((artwork.height - height) / 2 + offset.y, 0, artwork.height - height),
-    width,
-    height,
+    x: clamp((artwork.width - crop.width) / 2 + offset.x, 0, Math.max(0, artwork.width - crop.width)),
+    y: clamp((artwork.height - crop.height) / 2 + offset.y, 0, Math.max(0, artwork.height - crop.height)),
+    width: crop.width,
+    height: crop.height,
   };
 }
 
