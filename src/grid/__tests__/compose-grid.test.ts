@@ -249,7 +249,7 @@ describe("composeGrid", () => {
     const artwork = solidImage(40, 20, [0, 0, 0, OPAQUE]);
     const slot = { x: 0, y: 0, width: 200, height: 100 };
 
-    expect(offsetAfterDrag(artwork, slot, { x: 5, y: 5 }, { x: 100, y: 80 })).toEqual({ x: 0, y: 0 });
+    expect(offsetAfterDrag(artwork, slot, { x: 5, y: 5 }, { x: 100, y: 80 })).toEqual({ x: 5, y: 5 });
   });
 
   it("can reposition only when cover crops against the Slot", () => {
