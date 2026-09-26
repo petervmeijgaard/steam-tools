@@ -56,8 +56,12 @@ function GridPage() {
     pan.current = { x: event.clientX, y: event.clientY, offset };
   }
 
+  function endPan() {
+    pan.current = null;
+  }
+
   function movePan(event: PointerEvent<HTMLCanvasElement>) {
-    if (!pan.current || !artwork) return;
+    if (!pan.current || !artwork || event.buttons === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
     setOffset(
       offsetAfterDrag(artwork, pan.current.offset, {
@@ -177,10 +181,10 @@ function GridPage() {
               }
               onPointerDown={repositionable ? beginPan : undefined}
               onPointerMove={repositionable ? movePan : undefined}
-              onPointerUp={() => {
-                pan.current = null;
-              }}
-              className={`aspect-[2/3] h-auto w-72 ${repositionable ? "cursor-grab active:cursor-grabbing" : ""}`}
+              onPointerUp={endPan}
+              onPointerCancel={endPan}
+              onLostPointerCapture={endPan}
+              className={`aspect-[2/3] h-auto w-72 ${repositionable ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
             />
             {repositionable && (
               <p className="text-sm text-neutral-600">Drag the preview to choose which part stays.</p>
