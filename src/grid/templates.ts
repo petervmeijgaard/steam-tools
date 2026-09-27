@@ -30,7 +30,7 @@ export const templates: readonly Template[] = [
   { name: "PlayStation", src: playstation, slot: { x: 14, y: 116, width: 561, height: 764 } },
   { name: "PlayStation 2", src: playstation2, slot: { x: 16, y: 112, width: 196, height: 770 } },
   { name: "PSP", src: psp, slot: { x: 13, y: 83, width: 561, height: 797 } },
-  { name: "Steam", src: steam, slot: { x: 14, y: 97, width: 561, height: 783 } },
+  { name: "Steam", src: steam, slot: { x: 3, y: 90, width: 580, height: 795 } },
   { name: "Wii", src: wii, slot: { x: 13, y: 53, width: 561, height: 827 } },
   { name: "Xbox", src: xbox, slot: { x: 14, y: 97, width: 561, height: 783 } },
 ];
